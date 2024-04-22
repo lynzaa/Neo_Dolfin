@@ -23,6 +23,7 @@ you will have to obtain an API key from Groq. It is completely free.
 
 Let's see what Samuel L. Jackson thinks about DolFin:
 
-![image.png](attachment:1d70c1e7-89fa-4d62-8200-7ed9dd31806e.png)
+![image](https://github.com/DataBytes-Organisation/Neo_Dolfin/assets/111813260/a4119afa-8291-4550-bf0e-8e63c90936c9)
+
 
 Impressive, considering it took him **less than 30ms** to think of an answer.

@@ -2,7 +2,10 @@ Please find here a summary of contributions of students, that will be later uplo
 
 ## Contributions
 
-How do you order your contributions? Use the template of Ordered or Unordered Lists below and input your own work. It is important for the table to continue that your input only takes up the space of one line - otherwise the table will break. Take the following examples, Lines 20, 23, 29, 37 and 41 which I've done and you'll see that the lines are incredibly long. That's how it's meant to be. Of course, ordering or listing the contributions isn't necessary. You might just include a paragraph. It is totally up to you
+How do you order your contributions? Use the template of Ordered or Unordered Lists below and input your own work. It is important for the table to continue that your input only takes up the space of one line - otherwise the table will break. Take the following examples, Lines 20, 23, 29, 37 and 41 which I've done and you'll see that the lines are incredibly long. That's how it's meant to be. Of course, ordering or listing the contributions isn't necessary. You might just include a paragraph. It is totally up to you! 
+
+Once you write it here, feel free to paste it directly into the main report document via a commit and then PR. 
+This page is for clarity and understanding of how to add your contributions to the table in the report markdown document.
 
 Ordered List
 <ol type="1"><li>Item 1</li><li>Item 2</li><li>Item 3</li><li>Item 4</li><li>Item 5</li><li>Item 6</li></ol>
@@ -59,4 +62,17 @@ Unordered List
 | Zakarya Guerinat     |               |
 
 
+</details>
+
+<details>
+  
+<summary>Sprint 3&4 Contributions</summary>
+
+Practice in this table or the other! It's totally up to you :D 
+<br></br> 
+
+| Name                  | Contributions|
+|:-------------|:-------------------|
+| Full name   | Write contributions here ! <li>ITEM 1</li><li>ITEM 2</li><li>ITEM 3</li><li>ITEM 4</li><li>ITEM 5</li><li>ITEM 6</li>|
+  
 </details>

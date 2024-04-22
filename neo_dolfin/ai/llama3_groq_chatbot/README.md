@@ -17,6 +17,8 @@ you will have to obtain an API key from Groq. It is completely free.
 
  - Paste your API key in the quoted section of PUT_YOUR_API_KEY_HERE.json file.
 
+ - install Groq library: **pip install Groq**
+
  - Run the .ipynb file in Jupyter Lab / Notebook and you are good to go.
 
 ## Performance

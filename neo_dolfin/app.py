@@ -734,6 +734,11 @@ def auth_news():
 @app.route('/FAQ/')
 def auth_FAQ(): 
         return render_template("FAQ.html")
+
+## APPLICATION FINANCIAL WELLBEING SURVEY PAGE 
+@app.route('/RFW-prototype/')
+def auth_survey(): 
+        return render_template("RFW-prototype.html")
     
 # APPLICATION TERMS OF USE PAGE 
 @app.route('/terms-of-use/')

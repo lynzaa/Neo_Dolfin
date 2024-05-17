@@ -1,4 +1,4 @@
-from flask import Flask, Response, render_template, redirect, url_for, request, session, jsonify, flash
+from flask import Flask, Response, render_template, redirect, url_for, request, session, jsonify
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, EqualTo, Email, Regexp
@@ -8,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 import logging
 from logging.config import dictConfig
+from logging.handlers import RotatingFileHandler
 import secrets
 import io
 import boto3 as boto3
@@ -33,6 +34,7 @@ import csv
 import matplotlib.pyplot as plt
 import base64
 import matplotlib
+import torch
 matplotlib.use('Agg')
 
 from ai.cloud import word_cloud, expenditure_cluster_model
@@ -42,7 +44,17 @@ load_dotenv()  # Load environment variables from .env
 from api.temporary_used import optimized_API
 from api.temporary_used import API_db_op
 from api import database_operation
-from ai.chatbot import chatbot_logic
+
+######~~~~~~Uncomment following Lines for keras chatbot model~~~~~~#####
+# from ai.chatbot import chatbot_logic
+######~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#####
+
+# For chatbot using Groq API (Default)
+from ai.chatbot_api.llm_api import execute_chat_chain, configure_chat_chain, HuggingFaceEmbeddings, ChatGroq, recognize_speech, analyze_sentiment, store_negative_sentiment
+
+######~~~~~~Uncomment following Lines for LLAMA.cpp chatbot model~~~~~~#####
+# from ai.chatbot_llama_cpp.llama_cpp import execute_chat_chain, create_qa_chain, recognize_speech, analyze_sentiment, store_negative_sentiment,
+######~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#####
 
 # Access environment variables
 PASSWORD = os.getenv("PASSWORD")
@@ -64,10 +76,12 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context
 
+######~~~~~~Uncomment following Lines for keras chatbot model~~~~~~#####
 # Download NLTK data into the custom directory
-nltk.data.path.append(nltk_data_path)
-nltk.download('punkt', download_dir=nltk_data_path)
-nltk.download('wordnet', download_dir=nltk_data_path)
+# nltk.data.path.append(nltk_data_path)
+# nltk.download('punkt', download_dir=nltk_data_path)
+# nltk.download('wordnet', download_dir=nltk_data_path)
+######~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#####
 
 # setup logging configs - needs to be done before flask app is initialised
 # can be stored in a dict instead of being passed, but am being memory conservative. python3 also recommends storing in dict over reading from file.
@@ -145,10 +159,42 @@ dictConfig(
     }
 )
 # "dolfin" logger is essentially a master log. "dolfin.app" is a child logger of the "dolfin" logger. ".app" and ".basiq" are set to automatically propagate back to the master log.
+
+def setup_logging(): 
+    #define log rotation parameters 
+    LOG_MAX_SIZE = 10 * 1024 * 1024 #10 MB log size 
+    LOG_BACKUP_COUNT = 5 #number of backup log files until the first is overwritten 
+
+    #configuring log rotation 
+    rotating_handler = RotatingFileHandler(
+        filename= './logs/dolfin-root.log', #new master log defined 
+        maxBytes= LOG_MAX_SIZE, 
+        backupCount= LOG_BACKUP_COUNT
+    )
+    rotating_handler.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s in %(module)s.py >>> %(message)s"))
+
+    master_logger = logging.getLogger("dolfin") 
+    master_logger.addHandler(rotating_handler)
+
+#functions to collect contextual logging enhancement stuff 
+
+#def get_current_request_id():
+    #example implementation
+    #return "1234"
+#def get_current_user_id():
+    #if 'user_id' in session: 
+        #user_id = session['user_id']
+        #return user_id
+    #return user_id
+#def extract_accessed_webpage(log_message): 
+    #example 
+    #return "/path/to/webpage.html" 
+
 #master_log  = logging.getLogger("dolfin")
 app_log     = logging.getLogger("dolfin.app")
 #basiq_log   = logging.getLogger("dolfin.basiq")
 user_log    = logging.getLogger("dolfin.users")
+setup_logging()
 
 app = Flask(__name__)
 app.static_folder = 'static'
@@ -435,7 +481,7 @@ def register():
 
         # Create a new user and add it to the users_new database
         # Names are currently hard coded pending name fields in registration
-        new_user = UsersNew(username=input_username, email=input_email, mobile="+61450627105",
+        new_user = UsersNew(username=input_username, email=input_email, mobile="+614",
                             first_name="SAMPLE1",middle_name="test",last_name="USER",password=input_password)
         db.session.add(new_user)
         db.session.commit()
@@ -993,18 +1039,68 @@ def delete_user_account():
 
 
 ## CHATBOT PAGE 
+
+######~~~~~~Comment following Lines if you are using keras chatbot model~~~~~~#####
+######~~~~~~Also uncomment code lines in chatbot.html and chatbot_app.js for "old_chatbot" section~~~~~~##### 
+# @app.route('/chatbot', methods=['GET', 'POST'])
+# def chatbot():
+#     if request.method == 'GET':
+#         return render_template('chatbot.html')
+#     elif request.method == 'POST':
+#         user_input = request.get_json().get("message")
+#         prediction = chatbot_logic.predict_class(user_input)
+#         sentiment = chatbot_logic.process_sentiment(user_input)
+#         response = chatbot_logic.get_response(prediction, chatbot_logic.intents, user_input)
+#         message={"answer" :response}
+#         return jsonify(message)
+#     return render_template('chatbot.html')
+######~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#####
+
+
+######~~~~~~Comment following Lines if you are using LLAMA.cpp chatbot model~~~~~~#####
+# Initialize embeddings and language model using environment variables
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "hkunlp/instructor-large")
+LLM_MODEL = os.getenv("LLM_MODEL", "llama3-70b-8192")
+LLM_TEMP = float(os.getenv("LLM_TEMP", "0.1"))
+
+# Configure the chatbot
+embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+llm = ChatGroq(temperature=LLM_TEMP, model_name=LLM_MODEL)
+chat_chain = configure_chat_chain(embeddings, llm)
+######~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#####
+
 @app.route('/chatbot', methods=['GET', 'POST'])
 def chatbot():
     if request.method == 'GET':
         return render_template('chatbot.html')
     elif request.method == 'POST':
+        input_mode = request.get_json().get("input_mode")
         user_input = request.get_json().get("message")
-        prediction = chatbot_logic.predict_class(user_input)
-        sentiment = chatbot_logic.process_sentiment(user_input)
-        response = chatbot_logic.get_response(prediction, chatbot_logic.intents, user_input)
-        message={"answer" :response}
+
+        if input_mode == "voice":
+            user_input = recognize_speech()
+            if user_input is None:
+                return jsonify({"answer": "Sorry, I could not understand your speech."})
+
+        sentiment, sentiment_score = analyze_sentiment(user_input)
+
+
+        ######~~~~~~Comment following Lines for LLAMA.cpp chatbot model~~~~~~~~#####
+        # Invoke the chat chain with the user input and get the response
+        response = chat_chain.invoke({"input": user_input})
+        message = {"answer": response["answer"], "user_input": user_input}
+        ######~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#####
+
+        ######~~~~~~Uncomment following Lines for LLAMA.cpp chatbot model~~~~~~#####
+        # Invoke the chat chain with the user input and get the response
+        # response = qa_chain.invoke({"query": user_input})
+        # message = {"answer": response["result"], "user_input": user_input}
+        ######~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#####
+
+        if sentiment == "Negative":
+            store_negative_sentiment(user_input, response["answer"], sentiment_score)
+
         return jsonify(message)
-    return render_template('chatbot.html')
 
 global current_trans_data_with_level
 @app.route('/dash/epv')
@@ -1036,4 +1132,11 @@ def generate_wordcloud():
     return response
 # Run the Flask appp
 if __name__ == '__main__':
+
+    ######~~~~~~Uncomment following Lines for LLAMA.cpp chatbot model~~~~~~#####
+    # device = "cuda" if torch.cuda.is_available() else "cpu"
+    # prompt_type = "llama"
+    # qa_chain = create_qa_chain(device, prompt_type=prompt_type)
+    ######~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#####
+
     app.run(host='0.0.0.0',port=8000, debug=True, threaded=False)

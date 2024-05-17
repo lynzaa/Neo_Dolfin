@@ -1,0 +1,30 @@
+.form-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.form-check-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-right: 1px;
+}
+
+#notificationToggle {
+    margin: 10px auto;
+}
+
+.panel {
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.list-unstyled li {
+    margin-bottom: 15px;
+}
+
+.btn-default:hover {
+    background-color: #f0f0f0;
+    color: #000;
+}

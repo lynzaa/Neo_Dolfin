@@ -777,18 +777,13 @@ def open_terms_of_use():
 def open_terms_of_use_AI():
         return render_template("TermsofUse-AI.html") 
 
-# APPLICATION Article Template PAGE 
-#@app.route('/articleTemplate/')
-#def open_article_template():
-#        return render_template("articleTemplate.html") 
 
-
-# APPLICATION News Template PAGE      
+# APPLICATION NEWS TEMPLATE PAGE      
 @app.route('/news')
 def news_list():
     return render_template("news.html")
 
-# APPLICATION Article Template PAGE  
+# APPLICATION ARTICLE TEMPLATE PAGE  
 @app.route('/articles/<int:article_id>')
 def article_detail(article_id):
     with open('./static/json/article.json') as file:
@@ -800,6 +795,8 @@ def article_detail(article_id):
             return render_template("articleTemplate.html", articles=my_array)
         else:
             return "Article not found", 404
+
+
 
 @app.route('/feedback', methods=['GET', 'POST'])
 def feedback():

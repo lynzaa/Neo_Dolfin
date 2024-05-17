@@ -770,11 +770,18 @@ def auth_survey():
 @app.route('/terms-of-use/')
 def open_terms_of_use():
         return render_template("TermsofUse.html") 
-    
+
+   
 # APPLICATION TERMS OF USE-AI PAGE 
 @app.route('/terms-of-use-ai/')
 def open_terms_of_use_AI():
         return render_template("TermsofUse-AI.html") 
+
+# APPLICATION Article Template PAGE 
+#@app.route('/articleTemplate/')
+#def open_article_template():
+#        return render_template("articleTemplate.html") 
+
 
 # APPLICATION News Template PAGE      
 @app.route('/news')
